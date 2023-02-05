@@ -1,62 +1,52 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Route, Routes } from "react-router-dom";
+
+import NavBar from "./pages/NavBar";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { useFirebase } from "./context/Firebase";
+import ExpenseItem from "./Expenses/ExpenseItem";
+import Card from "../src/component/UI/Card";
+import NewExpense from "./Expenses/NewExpense";
 import Chart from "./component/Chart/Chart";
-import SetData from "./component/Data/SetData";
-import Expenses from "./component/Expenses/Expenses";
-import ExpensesChart from "./component/Expenses/ExpensesChart";
-import NewExpense from "./component/NewExpense/NewExpense";
-import { getDatabase, set, ref } from "firebase/database";
-import { app } from "./component/Data/firebase";
+import { EditModal } from "./Expenses/EditModal";
 
-const expenses = [
-  {
-    id: "e1",
-    title: "Toilet Paper",
-    amount: 94.12,
-    date: new Date(2019, 7, 14),
-  },
-  { id: "e2", title: "New TV", amount: 799.49, date: new Date(2021, 2, 12) },
-  {
-    id: "e3",
-    title: "Car Insurance",
-    amount: 294.67,
-    date: new Date(2010, 2, 28),
-  },
-  {
-    id: "e4",
-    title: "New Desk (Wooden)",
-    amount: 450,
-    date: new Date(2021, 5, 12),
-  },
-];
+const App = (props) => {
+  const [expense, setExpense] = useState([]);
+  const [data, setData] = useState([]);
 
-const db = getDatabase(app);
+  const [loading, setLoading] = useState(false);
 
-const App = () => {
-  const [expense, setExpense] = useState(expenses);
+  const firebase = useFirebase();
 
-  const putData = () => {
-    set(ref(db, "users/rajesh"), {
-      id: 1,
-      name: "Rajesh Payal",
-      age: 22,
-    });
-  };
-
-  const addExpenseHandler = (data) => {
-    setExpense((prevExpenses) => {
-      return [data, ...prevExpenses];
-    });
-    console.log(expense);
-  };
+  useEffect(() => {
+    const querySnapshot = firebase.getAllData();
+    querySnapshot?.then((docs) => setData(docs.docs));
+  });
 
   return (
-    <div className="App">
-      <button onClick={putData}>Add</button>
-      <SetData data={expense}></SetData>
-      <NewExpense onaddExpenseHandler={addExpenseHandler}></NewExpense>
+    <div>
+      <NavBar />
 
-      <Expenses items={expense} />
+      <Routes>
+        <Route path="#/" element={<div></div>}></Route>
+        <Route path="/" element={<h1>register</h1>}></Route>
+        <Route path="/login" element={<Login />}></Route>
+        <Route path="/register" element={<Register />}></Route>
+        <Route
+          path="/myexpenses"
+          element={
+            <div className="expenses">
+              {data.map((doc) => (
+                <ExpenseItem key={doc.id} id={doc.id} {...doc.data()} />
+              ))}
+            </div>
+          }
+        ></Route>
+        <Route path="/addexpense" element={<NewExpense />}></Route>
+      </Routes>
     </div>
   );
 };
